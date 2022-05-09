@@ -141,6 +141,7 @@ def main(args):
     is_best = False
     if args.checkpoint is not None:
         if args.evaluate:
+
             checkpoint = load_checkpoint(args.checkpoint)
             param_dict = model.state_dict()
             for k, v in checkpoint['state_dict'].items():
@@ -158,6 +159,14 @@ def main(args):
     evaluator = Evaluator(model, use_cpu=args.use_cpu)
     if args.evaluate:
         print("Test:")
+        evaluator.evaluate_tnorm(
+            test_loader,
+            dataset.query,
+            dataset.gallery,
+            metric,
+            return_mAP=True,
+            camera_number=camera_number[args.dataset],
+        )
         evaluator.evaluate(
             test_loader,
             dataset.query,
@@ -425,9 +434,9 @@ if __name__ == '__main__':
     parser.add_argument('--data-dir',
                         type=str,
                         metavar='PATH',
-                        default=osp.join(working_dir, 'data'))
+                        default=osp.join(working_dir, '../data'))
     parser.add_argument('--logs-dir',
                         type=str,
                         metavar='PATH',
-                        default=osp.join(working_dir, 'logs'))
+                        default=osp.join(working_dir, '../logs'))
     main(parser.parse_args())

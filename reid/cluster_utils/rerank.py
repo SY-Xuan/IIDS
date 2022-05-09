@@ -1,5 +1,4 @@
 import numpy as np
-from numba import jit
 
 
 def re_ranking(original_dist, k1=20, k2=6, lambda_value=0.3):

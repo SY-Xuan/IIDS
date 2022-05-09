@@ -5,7 +5,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 from .evaluation_metrics import accuracy
-from .loss import OIMLoss, TripletLoss, LabelSmoothing
+from .loss import TripletLoss
 from .utils.meters import AverageMeter
 import numpy as np
 
@@ -74,16 +74,8 @@ class Trainer(BaseTrainer):
             loss = self.criterion(outputs, targets)
             prec, = accuracy(outputs.data, targets.data)
             prec = prec[0]
-        elif isinstance(self.criterion, OIMLoss):
-            loss, outputs = self.criterion(outputs, targets)
-            prec, = accuracy(outputs.data, targets.data)
-            prec = prec[0]
         elif isinstance(self.criterion, TripletLoss):
             loss, prec = self.criterion(outputs, targets)
-        elif isinstance(self.criterion, LabelSmoothing):
-            loss = self.criterion(outputs, targets)
-            prec, = accuracy(outputs.data, targets.data)
-            prec = prec[0]
         else:
             raise ValueError("Unsupported loss:", self.criterion)
         return loss, prec
@@ -96,16 +88,6 @@ class IntraCameraTrainer(BaseTrainer):
     def _forward(self, inputs, targets, i):
         outputs = self.model(inputs, i)
         if isinstance(self.criterion, torch.nn.CrossEntropyLoss):
-            loss = self.criterion(outputs, targets)
-            prec, = accuracy(outputs.data, targets.data)
-            prec = prec[0]
-        elif isinstance(self.criterion, OIMLoss):
-            loss, outputs = self.criterion(outputs, targets)
-            prec, = accuracy(outputs.data, targets.data)
-            prec = prec[0]
-        elif isinstance(self.criterion, TripletLoss):
-            loss, prec = self.criterion(outputs, targets)
-        elif isinstance(self.criterion, LabelSmoothing):
             loss = self.criterion(outputs, targets)
             prec, = accuracy(outputs.data, targets.data)
             prec = prec[0]
@@ -281,10 +263,6 @@ class InterCameraTrainer(BaseTrainer):
     def _forward(self, inputs, targets):
         prob, distance = self.model(inputs)
         if isinstance(self.criterion, torch.nn.CrossEntropyLoss):
-            loss_entropy = self.criterion(prob, targets)
-            prec_entropy, = accuracy(prob.data, targets.data)
-            prec_entropy = prec_entropy[0]
-        elif isinstance(self.criterion, LabelSmoothing):
             loss_entropy = self.criterion(prob, targets)
             prec_entropy, = accuracy(prob.data, targets.data)
             prec_entropy = prec_entropy[0]
