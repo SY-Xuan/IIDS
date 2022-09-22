@@ -52,7 +52,7 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, with_permute_adain=False):
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -68,28 +68,19 @@ class Bottleneck(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
-        self.with_permute_adain = with_permute_adain
-        if self.with_permute_adain:
-            self.permute_adain = PermuteAdaptiveInstanceNorm2d()
 
     def forward(self, x):
         residual = x
 
         out = self.conv1(x)
-        if self.with_permute_adain:
-            out = self.permute_adain(out)
         out = self.bn1(out)
         out = self.relu(out)
 
         out = self.conv2(out)
-        if self.with_permute_adain:
-            out = self.permute_adain(out)
         out = self.bn2(out)
         out = self.relu(out)
 
         out = self.conv3(out)
-        if self.with_permute_adain:
-            out = self.permute_adain(out)
         out = self.bn3(out)
 
         if self.downsample is not None:
@@ -112,7 +103,7 @@ class AIBNBottleneck(nn.Module):
                  adaptive_weight=None,
                  generate_weight=True,
                  init_weight=0.1,
-                 with_permute_adain=False):
+                 ):
         super(AIBNBottleneck, self).__init__()
         if adaptive_weight is None:
             self.adaptive_weight = nn.Parameter(torch.ones(1) * init_weight)
@@ -139,28 +130,19 @@ class AIBNBottleneck(nn.Module):
         if self.downsample is not None:
             self.downsample[1].adaptive_weight = self.adaptive_weight
         self.stride = stride
-        self.with_permute_adain = with_permute_adain
-        if self.with_permute_adain:
-            self.permute_adain = PermuteAdaptiveInstanceNorm2d()
 
     def forward(self, x):
         residual = x
 
         out = self.conv1(x)
-        if self.with_permute_adain:
-            out = self.permute_adain(out)
         out = self.bn1(out)
         out = self.relu(out)
 
         out = self.conv2(out)
-        if self.with_permute_adain:
-            out = self.permute_adain(out)
         out = self.bn2(out)
         out = self.relu(out)
 
         out = self.conv3(out)
-        if self.with_permute_adain:
-            out = self.permute_adain(out)
         out = self.bn3(out)
 
         if self.downsample is not None:
@@ -240,7 +222,7 @@ class AIBNResNet(nn.Module):
                   adaptive_weight=adaptive_weight,
                   generate_weight=True,
                   init_weight=init_weight,
-                  with_permute_adain=self.with_permute_adain))
+                  ))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             if i == (blocks - 1):
@@ -250,7 +232,7 @@ class AIBNResNet(nn.Module):
                           adaptive_weight=adaptive_weight,
                           generate_weight=True,
                           init_weight=init_weight,
-                          with_permute_adain=self.with_permute_adain))
+                          ))
             else:
                 layers.append(
                     block(self.inplanes,
@@ -258,7 +240,7 @@ class AIBNResNet(nn.Module):
                           adaptive_weight=adaptive_weight,
                           generate_weight=True,
                           init_weight=init_weight,
-                          with_permute_adain=self.with_permute_adain))
+                          ))
 
         return nn.Sequential(*layers)
 
@@ -275,10 +257,10 @@ class AIBNResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample, with_permute_adain=self.with_permute_adain))
+        layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, with_permute_adain=self.with_permute_adain))
+            layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
